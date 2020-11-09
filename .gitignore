@@ -1,2 +1,4 @@
 # created by virtualenv automatically
 baymax
+__pycache__
+debug.log
