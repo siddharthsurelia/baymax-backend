@@ -2,5 +2,9 @@
     "users": {
         "name": "sid",
         "age": 10
+    },
+    "doctor":{
+        "name": "Who",
+        "age": 40
     }
 }
