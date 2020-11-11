@@ -1,3 +1,5 @@
 # created by virtualenv automatically
 baymax
 .vscode
+__pycache__
+debug.log

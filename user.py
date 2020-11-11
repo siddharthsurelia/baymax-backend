@@ -1,19 +1,23 @@
-from flask import Flask
-from user import user_blueprint
-from medicine import medicine_blueprint
+from flask import Blueprint, jsonify, request, Response, json
+from bson.objectid import ObjectId
+from pymongo import MongoClient
+import logging as log
+import sys
+
+user_blueprint = Blueprint('user_blueprint', __name__)
+
+client = MongoClient("mongodb://localhost:27017")
+db = client["baymax"]
 
 
-app = Flask(__name__)
-app.register_blueprint(user_blueprint)
-app.register_blueprint(medicine_blueprint)
+@user_blueprint.route("/")
+def index():
+    return jsonify({"Message": "You have reached the home page"})
 
 
-'''
-    Get a list of doctors
-'''
-@app.route("/doctor", methods=["GET"])
-def get_all_doctors():
-    col = db["doctor"].find()
+@user_blueprint.route("/users/all", methods=["GET"])
+def get_all_users():
+    col = db["users"].find()
     res = []
 
     for data in col:
@@ -22,52 +26,41 @@ def get_all_doctors():
             "name": data["name"],
             "age": data["age"]
         }
-
         res.append(dataDict)
 
     return Response(response=json.dumps(res),
                     status=200,
-                    mimetype="application/json" )    
+                    mimetype='application/json')
 
 
-
-'''
-    Get specific doctor based on _id
-'''
-@app.route("/doctor/<string:id>", methods=["GET"])
-def get_doctor(id):
-    data = db["doctor"].find_one({"_id": ObjectId(id)})
-
+@user_blueprint.route("/users/<string:id>", methods=["GET"])
+def get_user(id):
+    data = db["users"].find_one({"_id": ObjectId(id)})
+    
     if not bool(data):
-        return Response(
-            response=json.dumps({"error": "No such record found"}),
-            status=204,
-            mimetype="application/json"
-        )
+        return Response(response=json.dumps({"Error": "No such record found"}),
+                    status=204,
+                    mimetype='application/json')
 
     dataDict = {
-            "id": str(data["_id"]),
-            "name": data["name"],
-            "age": data["age"]
+        "id": str(data["_id"]),
+        "name": data["name"],
+        "age": data["age"]
     }
+
     return Response(response=json.dumps(dataDict),
                     status=200,
-                    mimetype="application/json" )
+                    mimetype='application/json')
 
 
-'''
-    Add a doctors
-'''
-@app.route("/doctor", methods=["POST"])
-def add_doctor():
+@user_blueprint.route("/users", methods=["POST"])
+def add_user():
     body = request.json
 
     try:
-        db["doctor"].insert_one({
+        db["users"].insert_one({
             "name": body["name"],
-            "age": body["age"],
-            "type": '',
-            "clinic_address": ''            
+            "age": body["age"]
         })
     except KeyError:
         return Response(response=json.dumps({"Status": "Insufficient data"}),
@@ -83,21 +76,18 @@ def add_doctor():
                     mimetype='application/json')
 
 
-'''
-    Update a specific doctors
-'''
-@app.route("/doctor/<string:id>", methods=["PUT"])
-def update_doctor(id):
+@user_blueprint.route("/users/<string:id>", methods=["PUT"])
+def update_user(id):
     body = request.json
 
     try:
-        db["doctor"].update_one({
-            "_id": ObjectId(id) },
+        db["users"].update_one({
+            '_id': ObjectId(id)},
             {
                 "$set": {
                     "name": body["name"],
                     "age": body["age"]
-                }            
+                }
         })
     except KeyError:
         return Response(response=json.dumps({"Status": "Insufficient data"}),
@@ -109,15 +99,12 @@ def update_doctor(id):
                     mimetype='application/json')
 
 
-'''
-    Delete a specific doctors
-'''
-@app.route("/doctor/<string:id>", methods=["DELETE"])
-def delete_doctor(id):
-    data = db["doctor"].find_one({"_id": ObjectId(id)})
+@user_blueprint.route("/users/<string:id>", methods=["DELETE"])
+def del_user(id):
+    data = db["users"].find_one({"_id": ObjectId(id)})
 
     if bool(data):
-        db['doctor'].delete_many({'_id': ObjectId(id)})
+        db['users'].delete_many({'_id': ObjectId(id)})
 
         return Response(response=json.dumps({"Status": "Record has been deleted"}),
                     status=200,
@@ -126,9 +113,3 @@ def delete_doctor(id):
         return Response(response=json.dumps({"Status": "Record has been deleted"}),
                     status=200,
                     mimetype='application/json')
-
-
-
-if __name__ == '__main__':
-    app.debug = True
-    app.run()
