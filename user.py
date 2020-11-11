@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request, Response, json
 from bson.objectid import ObjectId
 from pymongo import MongoClient
+import hashlib
 import logging as log
 import sys
 
@@ -15,6 +16,26 @@ def index():
     return jsonify({"Message": "You have reached the home page"})
 
 
+@user_blueprint.route("/users/login", methods=["POST"])
+def login():
+    body = request.json
+    username = body["username"]
+    password = body["password"]
+
+    data = db["users"].find_one({"username": username})
+
+    if data is not None and hashlib.sha512(password.encode()).hexdigest() == data["password"]:
+        res = "Login Successful"
+        status = 200
+    else:
+        res = "Username or Password incorrect"
+        status = 401
+    
+    return Response(response=json.dumps(res),
+                    status=200,
+                    mimetype='application/json')
+
+
 @user_blueprint.route("/users/all", methods=["GET"])
 def get_all_users():
     col = db["users"].find()
@@ -23,6 +44,7 @@ def get_all_users():
     for data in col:
         dataDict = {
             "id": str(data["_id"]),
+            "username": data["username"],
             "name": data["name"],
             "age": data["age"]
         }
@@ -44,6 +66,7 @@ def get_user(id):
 
     dataDict = {
         "id": str(data["_id"]),
+        "username": data["username"],
         "name": data["name"],
         "age": data["age"]
     }
@@ -56,10 +79,14 @@ def get_user(id):
 @user_blueprint.route("/users", methods=["POST"])
 def add_user():
     body = request.json
+    password = body["password"]
+    result = hashlib.sha512(password.encode())
 
     try:
         db["users"].insert_one({
             "name": body["name"],
+            "username": body["username"],
+            "password": result.hexdigest(),
             "age": body["age"]
         })
     except KeyError:
