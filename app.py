@@ -171,7 +171,9 @@ def add_doctor():
     try:
         db["doctor"].insert_one({
             "name": body["name"],
-            "age": body["age"]
+            "age": body["age"],
+            "type": '',
+            "clinic_address": ''            
         })
     except KeyError:
         return Response(response=json.dumps({"Status": "Insufficient data"}),
@@ -200,7 +202,7 @@ def update_doctor(id):
             {
                 "$set": {
                     "name": body["name"],
-                    "age": body["name"]
+                    "age": body["age"]
                 }            
         })
     except KeyError:

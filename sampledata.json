@@ -3,8 +3,50 @@
         "name": "sid",
         "age": 10
     },
-    "doctor":{
+    "doctor": {
         "name": "Who",
-        "age": 40
+        "age": 40,
+        "base_fee": ""
+    },
+    "prescription": {
+        "doc_id": "",
+        "user_id": "",
+        "appointment_id": "",
+        "drugs": [
+            {
+                "drug_id": "",
+                "drug_name": "",
+                "dose": "",
+                "units": ""
+            }
+        ]
+    },
+    "bill": {
+        "user_id": "",
+        "doc_id": "",
+        "appointment_id": ""
+    },
+    "appointment": {
+        "user_id": "",
+        "doc_id": "",
+        "date": "",
+        "start_time": "",
+        "end_time": ""
+    },
+    "drug": {
+        "drug_name": "",
+        "contains": [
+            {
+                "ingredient_id": "ingredient_id",
+                "qty": "",
+                "units": ""
+            }
+        ],
+        "brand": "brand_id",
+        "cure_for": [
+            {
+                "disease_id": ""
+            }
+        ]
     }
 }
