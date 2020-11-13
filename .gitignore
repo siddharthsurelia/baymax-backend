@@ -3,3 +3,4 @@ baymax
 .vscode
 __pycache__
 debug.log
+.idea
