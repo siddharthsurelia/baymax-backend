@@ -152,3 +152,55 @@ def delete_appointment(id):
                     status=200,
                     mimetype='application/json')    
 
+
+'''
+    Get Appointment from appointment id
+'''
+@appointment_blueprint.route("/appointment/<string:id>", methods=["GET"])
+def get_appointment(id):
+    data = db["appointment"].find_one({"_id": ObjectId(id)})
+
+    if bool(data):
+        return Response(response=dumps(data),
+                    status=200,
+                    mimetype="application/json")
+
+
+'''
+    Update Appointment
+'''
+@appointment_blueprint.route("/appointment/<string:id>", methods=["PUT"])
+def update_appointment(id):
+    body = request.json
+
+    duration = 30
+
+    if 'duration' in body.keys():
+        duration = int(body['duration'])
+
+    y, m, d, H, M, S, *_ = split('-|/', body['start_time'])
+
+    start_time = datetime(int(y), int(m), int(d), int(H), int(M), int(S), 00)
+
+    try:
+        db["appointment"].update_one({
+            '_id': ObjectId(id)},
+            {
+                "$set": {
+                    "start_time": start_time,
+                    "end_time": start_time + timedelta(minutes=duration)
+                }
+            }
+        )
+    except KeyError:
+        return Response(response=json.dumps({"Status": "Insufficient data"}),
+                status=500,
+                mimetype='application/json')
+    except Exception as e:
+        return Response(response=json.dumps({"error": "Weird Internal Server Error"}),
+                status=500,
+                mimetype='application/json')
+
+    return Response(response=json.dumps({"status": "Updated"}),
+                status=500,
+                mimetype='application/json')                
