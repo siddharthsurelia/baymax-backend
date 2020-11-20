@@ -6,51 +6,26 @@ import logging as log
 import datetime
 import sys
 
-user_blueprint = Blueprint('user_blueprint', __name__)
+patient_blueprint = Blueprint('patient_blueprint', __name__)
 
 client = MongoClient("mongodb://localhost:27017")
 db = client["baymax"]
 
 
-@user_blueprint.route("/")
-def index():
-    return jsonify({"Message": "You have reached the home page"})
-
-
-@user_blueprint.route("/users/login", methods=["POST"])
-def login():
-    body = request.json
-    username = body["username"]
-    password = body["password"]
-
-    data = db["users"].find_one({"username": username})
-
-    if data is not None and hashlib.sha512(password.encode()).hexdigest() == data["password"]:
-        res = "Login Successful"
-        status = 200
-    else:
-        res = "Username or Password incorrect"
-        status = 401
-
-    return Response(response=json.dumps(res),
-                    status=200,
-                    mimetype='application/json')
-
-
-@user_blueprint.route("/users/all", methods=["GET"])
-def get_all_users():
-    col = db["users"].find()
+@user_blueprint.route("/patients/all", methods=["GET"])
+def get_all_patients():
+    col = db["patients"].find()
     res = []
 
     for data in col:
         dataDict = {
             "id": str(data["_id"]),
-            "firstname": data["firstname"],
-            "lastname": data["lastname"],
-            "email": data["email"],
-            "dob": data["dob"],
-            "mobile": data["mobile"],
-            "address": data["address"]
+            "height": data["height"],
+            "weight": data["weight"],
+            "cholestrol": data["cholestrol"],
+            "sugar_level": data["sugar_level"],
+            "blood_pressure": data["blood_pressure"],
+            "blood_group": data["blood_group"]
         }
         res.append(dataDict)
 
@@ -59,9 +34,9 @@ def get_all_users():
                     mimetype='application/json')
 
 
-@user_blueprint.route("/users/<string:id>", methods=["GET"])
-def get_user(id):
-    data = db["users"].find_one({"_id": ObjectId(id)})
+@user_blueprint.route("/patients/<string:id>", methods=["GET"])
+def get_patient(id):
+    data = db["patients"].find_one({"_id": ObjectId(id)})
 
     if not bool(data):
         return Response(response=json.dumps({"Error": "No such record found"}),
@@ -70,34 +45,10 @@ def get_user(id):
 
     dataDict = {
         "id": str(data["_id"]),
-        "firstname": data["firstname"],
-        "lastname": data["lastname"],
-        "email": data["email"],
-        "dob": data["dob"],
-        "mobile": data["mobile"],
-        "address": data["address"]
-    }
-
-    return Response(response=json.dumps(dataDict),
-                    status=200,
-                    mimetype='application/json')
-
-
-@user_blueprint.route("/users/biometrics/<string:id>", methods=["GET"])
-def get_user_biometrics(id):
-    data = db["biometrics"].find_one({"_id": ObjectId(id)})
-
-    if not bool(data):
-        return Response(response=json.dumps({"Error": "No such record found"}),
-                        status=204,
-                        mimetype='application/json')
-
-    dataDict = {
         "height": data["height"],
         "weight": data["weight"],
-        "bmi": data["bmi"],
         "cholestrol": data["cholestrol"],
-        "diabetic": data["diabetic"],
+        "sugar_level": data["sugar_level"],
         "blood_pressure": data["blood_pressure"],
         "blood_group": data["blood_group"]
     }

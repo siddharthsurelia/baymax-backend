@@ -6,23 +6,23 @@ import sys
 
 import med_search
 
-medicine_blueprint = Blueprint('medicine_blueprint', __name__)
+drugs_blueprint = Blueprint('drugs_blueprint', __name__)
 
 client = MongoClient("mongodb://localhost:27017")
 db = client["baymax"]
 
 
-@medicine_blueprint.route("/medicines/search/<string:med_name>", methods=["GET"])
-def search_medicines(med_name):
+@drugs_blueprint.route("/drugs/search/<string:med_name>", methods=["GET"])
+def search_drugs(med_name):
     data = med_search.search_medname(med_name)
 
     if data is not None:
         response = json.dumps(data)
         status = 200
 
-        db["medicines"].insert_one(data)
+        db["drugs"].insert_one(data)
     else:
-        response = json.dumps({"Status": "No such medicine found"})
+        response = json.dumps({"Status": "No such drug found"})
         status = 204
 
     return Response(response=response,
@@ -30,9 +30,9 @@ def search_medicines(med_name):
                     mimetype="application/json")
 
 
-@medicine_blueprint.route("/medicines/all", methods=["GET"])
-def get_all_meds():
-    col = db["medicines"].find()
+@drugs_blueprint.route("/drugs/all", methods=["GET"])
+def get_all_drugs():
+    col = db["drugs"].find()
     res = []
 
     for data in col:
@@ -41,9 +41,9 @@ def get_all_meds():
             "name": data["name"],
             "manufacturer": data["manufacturer"],
             "composition": data["composition"],
-            "symptoms": data["symptoms"],
             "side_effects": data["side_effects"],
-            "substitutes": data["substitutes"]
+            "substitutes": data["substitutes"],
+            "illness_id": data["illness_id"]
         }
         res.append(dataDict)
 
@@ -52,9 +52,9 @@ def get_all_meds():
                     mimetype='application/json')
 
 
-@medicine_blueprint.route("/medicines/<string:id>", methods=["GET"])
-def get_med(id):
-    data = db["medicines"].find_one({"_id": ObjectId(id)})
+@drugs_blueprint.route("/drugs/<string:id>", methods=["GET"])
+def get_drug(id):
+    data = db["drugs"].find_one({"_id": ObjectId(id)})
     
     if not bool(data):
         return Response(response=json.dumps({"Error": "No such record found"}),
@@ -66,9 +66,9 @@ def get_med(id):
         "name": data["name"],
         "manufacturer": data["manufacturer"],
         "composition": data["composition"],
-        "symptoms": data["symptoms"],
         "side_effects": data["side_effects"],
-        "substitutes": data["substitutes"]
+        "substitutes": data["substitutes"],
+        "illness_id": data["illness_id"]
     }
 
     return Response(response=json.dumps(dataDict),

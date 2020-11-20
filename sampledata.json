@@ -1,11 +1,15 @@
 {
     "users": {
-        "name": "this",
-        "username": "that",
-        "password": "those",
+        "firstname": "Sherlock",
+        "lastname": "Holmes",
+        "email": "sherlock@holmes.com",
+        "password": "holmes",
         "dob": "1997-08-12",
         "mobile": "8949134289",
-        "address": "221 B, Baker Street",
+        "address": "221 B, Baker Street"
+    },
+    "patients": {
+        "_id": "5fb7a3920ad9f96f48021bb8",
         "height": 1.4,
         "weight": 55,
         "cholestrol": 180,
@@ -13,50 +17,71 @@
         "blood_pressure": "120/80",
         "blood_group": "O+"
     },
-    "doctor": {
-        "name": "Who",
-        "age": 40,
-        "base_fee": ""
+    "doctors": {
+        "_id": "5fb7b0f30ad9f96f48021bc4",
+        "base_fee": "500",
+        "specialization": "Cardiologist"
     },
     "prescription": {
-        "doc_id": "",
-        "user_id": "",
         "appointment_id": "",
         "drugs": [
             {
                 "drug_id": "",
-                "drug_name": "",
-                "dose": "",
+                "dosage": "",
                 "units": ""
             }
         ]
     },
-    "bill": {
-        "user_id": "",
-        "doc_id": "",
-        "appointment_id": ""
-    },
     "appointment": {
         "user_id": "",
         "doc_id": "",
-        "date": "",
-        "start_time": "",
-        "end_time": ""
+        "start_time": "2020-11-20T09:18:00+00:00",
+        "end_time": "2020-11-20T09:19:16+00:00",
+        "status": "Available"
     },
-    "drug": {
-        "drug_name": "",
-        "contains": [
-            {
-                "ingredient_id": "ingredient_id",
-                "qty": "",
-                "units": ""
-            }
-        ],
-        "brand": "brand_id",
-        "cure_for": [
-            {
-                "disease_id": ""
-            }
+    "drugs": [
+        {
+            "composition": "Nimesulide (100mg) + Paracetamol (325mg)",
+            "manufacturer": "Cipla Ltd",
+            "name": "Nicip Plus Tablet",
+            "side_effects": [
+                "Nausea",
+                "Vomiting",
+                "Diarrhea",
+                "Increased liver enzymes"
+            ],
+            "substitutes": [
+                ""
+            ]
+        },
+        {
+            "composition": "Nimesulide (100mg) + Paracetamol (325mg)",
+            "manufacturer": "Seagull Pharmaceutical Pvt Ltd",
+            "name": "Nimprex-P Tablet",
+            "side_effects": [
+                "Nausea",
+                "Vomiting",
+                "Diarrhea",
+                "Increased liver enzymes"
+            ],
+            "substitutes": [
+                ""
+            ]
+        }
+    ],
+    "symptoms": {
+        "name": "Pain Relief"
+    },
+    "schedules": {
+        "start_time": "09:00:00+00:00",
+        "end_time": "18:00:00+00:00",
+        "duration": "15"
+    },
+    "illness": {
+        "name": "Arrhythmia",
+        "specialist": "Cardiologist",
+        "symptom_id": [
+            ""
         ]
     }
 }

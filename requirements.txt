@@ -8,3 +8,4 @@ pymongo==3.11.0
 selenium==3.141.0
 urllib3==1.25.11
 Werkzeug==1.0.1
+python-dotenv==0.15.0
