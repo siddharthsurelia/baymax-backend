@@ -3,6 +3,7 @@ from bson.objectid import ObjectId
 from pymongo import MongoClient
 import logging as log
 import sys
+import hashlib
 
 doctor_blueprint = Blueprint('doctor_blueprint', __name__)
 
@@ -61,17 +62,30 @@ def get_doctor(id):
 @doctor_blueprint.route("/doctor", methods=["POST"])
 def add_doctor():
     body = request.json
+    password = body["password"]
+    result = hashlib.sha512(password.encode())
 
     try:
-        _doc = db["doctor"].insert_one({
-            "name": body["name"],
-            "age": body["age"],
-            "type": '',
-            "clinic_address": ''            
+        _doc = db["users"].insert_one({
+            "name": {
+                "first_name": body["first_name"],
+                "last_name": body["last_name"]
+            },
+            "email": body["email"],
+            "password": result.hexdigest(),
+            "dob": body["dob"],
+            "gender": body["gender"],
+            "address": body["address"]
+        })
+
+        db["doctor"].insert_one({
+            "doctor_id": _doc.inserted_id,
+            "base_fee": body['base_fee'],
+            "specialization": body['specialization']     
         })
 
         db["schedule"].insert_one({
-            "doctor_id": ObjectId(_doc.inserted_id),
+            "doctor_id": _doc.inserted_id,
             "business_hour": {
                 "start_time": body['start_time'] if 'start_time' in body else '',
                 "end_time": body['end_time'] if 'end_time' in body else '',
