@@ -119,6 +119,8 @@ def delete_doctor(id):
     if bool(data):
         db['doctor'].delete_many({'_id': ObjectId(id)})
 
+        db['schedule'].find_one_and_delete({'doctor_id': ObjectId(id) })
+
         return Response(response=json.dumps({"Status": "Record has been deleted"}),
                     status=200,
                     mimetype='application/json')

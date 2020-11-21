@@ -80,7 +80,7 @@ def update_schedule(id):
 @schedule_blueprint.route('/schedule/<string:id>', methods=['DELETE'])
 def delete_schedule(id):
 
-    data = db["doctor"].find_one_and_delete({"doctor_id": ObjectId(id)})
+    data = db["schedule"].find_one_and_delete({"doctor_id": ObjectId(id)})
 
     if bool(data):        
         return Response(response=json.dumps({"Status": "Record has been deleted"}),
