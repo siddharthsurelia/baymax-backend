@@ -63,12 +63,23 @@ def add_doctor():
     body = request.json
 
     try:
-        db["doctor"].insert_one({
+        _doc = db["doctor"].insert_one({
             "name": body["name"],
             "age": body["age"],
             "type": '',
             "clinic_address": ''            
         })
+
+        db["schedule"].insert_one({
+            "doctor_id": ObjectId(_doc.inserted_id),
+            "business_hour": {
+                "start_time": body['start_time'] if 'start_time' in body else '',
+                "end_time": body['end_time'] if 'end_time' in body else '',
+                "duration": body['duration'] if 'duration' in body else ''
+            }
+        })
+
+
     except KeyError:
         return Response(response=json.dumps({"Status": "Insufficient data"}),
                 status=500,
