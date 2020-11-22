@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request, Response, json
 from bson.objectid import ObjectId
+from bson.json_util import dumps
 from pymongo import MongoClient
 import logging as log
 import sys
@@ -16,19 +17,28 @@ db = client["baymax"]
 '''
 @doctor_blueprint.route("/doctor", methods=["GET"])
 def get_all_doctors():    
-    col = db["doctors"].find()
-    res = []
-
-    for data in col:
-        dataDict = {
-            "id": str(data["_id"]),
-            "name": data["name"],
-            "age": data["age"]
+    col = db["doctors"].aggregate([
+        {
+            '$lookup': {
+                'from': 'users', 
+                'localField': '_id', 
+                'foreignField': '_id', 
+                'as': 'User'
+            }
         }
+    ])
+    # res = []
 
-        res.append(dataDict)
+    # for data in col:
+    #     dataDict = {
+    #         "id": str(data["_id"]),
+    #         "name": data["name"],
+    #         "age": data["age"]
+    #     }
 
-    return Response(response=json.dumps(res),
+    #     res.append(dataDict)
+
+    return Response(response=dumps(col),
                     status=200,
                     mimetype="application/json" ) 
 
@@ -37,7 +47,23 @@ def get_all_doctors():
 '''
 @doctor_blueprint.route("/doctor/<string:id>", methods=["GET"])
 def get_doctor(id):
-    data = db["doctors"].find_one({"_id": ObjectId(id)})
+    data = db["doctors"].aggregate([
+        {
+            "$match": {
+                "_id": ObjectId(id)
+            }
+        },
+        {
+            '$lookup': {
+                'from': 'users', 
+                'localField': '_id', 
+                'foreignField': '_id', 
+                'as': 'User'
+            }
+        }
+    ])
+    
+    # .find_one({"_id": ObjectId(id)})
 
     if not bool(data):
         return Response(
@@ -46,12 +72,12 @@ def get_doctor(id):
             mimetype="application/json"
         )
 
-    dataDict = {
-            "id": str(data["_id"]),
-            "name": data["name"],
-            "age": data["age"]
-    }
-    return Response(response=json.dumps(dataDict),
+    # dataDict = {
+    #         "id": str(data["_id"]),
+    #         "name": data["name"],
+    #         "age": data["age"]
+    # }
+    return Response(response=dumps(data),
                     status=200,
                     mimetype="application/json" )
 
@@ -79,12 +105,12 @@ def add_doctor():
         })
 
         db["doctors"].insert_one({
-            "doctor_id": _doc.inserted_id,
+            "_id": _doc.inserted_id,
             "base_fee": body['base_fee'],
             "specialization": body['specialization']     
         })
 
-        db["schedule"].insert_one({
+        db["schedules"].insert_one({
             "doctor_id": _doc.inserted_id,
             "business_hour": {
                 "start_time": body['start_time'] if 'start_time' in body else '',
@@ -115,14 +141,18 @@ def add_doctor():
 def update_doctor(id):
     body = request.json
 
+    filter = { fil: body[fil] for fil in body.keys() }
+
+    print(filter)
+
     try:
         db["doctors"].update_one({
             "_id": ObjectId(id) },
             {
-                "$set": {
-                    "name": body["name"],
-                    "age": body["age"]
-                }            
+                "$set": filter
+                    # "base_fee": body["base_fee"],
+                    # "specialization": body["specialization"]
+                           
         })
     except KeyError:
         return Response(response=json.dumps({"Status": "Insufficient data"}),
@@ -144,7 +174,7 @@ def delete_doctor(id):
     if bool(data):
         db['doctors'].delete_many({'_id': ObjectId(id)})
 
-        db['schedule'].find_one_and_delete({'doctor_id': ObjectId(id) })
+        db['schedules'].find_one_and_delete({'doctor_id': ObjectId(id) })
 
         db['users'].find_one_and_delete({'_id': ObjectId(id) })
 
