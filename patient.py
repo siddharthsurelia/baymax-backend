@@ -12,7 +12,7 @@ client = MongoClient("mongodb://localhost:27017")
 db = client["baymax"]
 
 
-@user_blueprint.route("/patients/all", methods=["GET"])
+@patient_blueprint.route("/patients/all", methods=["GET"])
 def get_all_patients():
     col = db["patients"].find()
     res = []
@@ -34,7 +34,7 @@ def get_all_patients():
                     mimetype='application/json')
 
 
-@user_blueprint.route("/patients/<string:id>", methods=["GET"])
+@patient_blueprint.route("/patients/<string:id>", methods=["GET"])
 def get_patient(id):
     data = db["patients"].find_one({"_id": ObjectId(id)})
 
@@ -58,40 +58,40 @@ def get_patient(id):
                     mimetype='application/json')
 
 
-@user_blueprint.route("/users", methods=["POST"])
+@patient_blueprint.route("/patients", methods=["POST"])
 def add_user():
     body = request.json
     password = body["password"]
     result = hashlib.sha512(password.encode())
-    height = body["height"]
-    weight = body["weight"]
-    bmi = weight/height**2
-    dob = datetime.datetime.strptime(body["dob"], "%Y-%m-%d").date()
-    today = datetime.date.today()
-    age = today.year - dob.year - \
-        ((today.month, today.day) < (dob.month, dob.day))
-
-    biometrics = db["biometrics"].insert_one({
-        "height": height,
-        "weight": weight,
-        "bmi": bmi,
-        "cholestrol": body["cholestrol"],
-        "diabetic": body["diabetic"],
-        "blood_pressure": body["blood_pressure"],
-        "blood_group": body["blood_group"]
-    })
+    # height = body["height"]
+    # weight = body["weight"]
+    # bmi = weight/height**2
+    # dob = datetime.datetime.strptime(body["dob"], "%Y-%m-%d").date()
+    # today = datetime.date.today()
+    # age = today.year - dob.year - \
+    #     ((today.month, today.day) < (dob.month, dob.day))
 
     try:
-
-        db["users"].insert_one({
-            "name": body["name"],
-            "username": body["username"],
+        _patient = db["users"].insert_one({
+            "name": {
+                "first_name": body["first_name"],
+                "last_name": body["last_name"]
+            },
+            "email": body["email"],
             "password": result.hexdigest(),
-            "dob": str(dob),
-            "age": age,
-            "mobile": body["mobile"],
-            "address": body["address"],
-            "biometrics_id": biometrics._InsertOneResult__inserted_id
+            "dob": body["dob"],
+            "gender": body["gender"],
+            "address": body["address"]
+        })
+
+        db["patients"].insert_one({
+            "patient_id": _patient.inserted_id,
+            "height": body["height"],
+            "weight": body["weight"],
+            "cholestrol": body["cholestrol"],
+            "sugar_level": body["sugar_level"],
+            "blood_pressure": body["blood_pressure"],
+            "blood_group": body["blood_group"]    
         })
     except KeyError:
         return Response(response=json.dumps({"Status": "Insufficient data"}),
@@ -107,17 +107,21 @@ def add_user():
                     mimetype='application/json')
 
 
-@user_blueprint.route("/users/<string:id>", methods=["PUT"])
-def update_user(id):
+@patient_blueprint.route("/patients/<string:id>", methods=["PUT"])
+def update_patient(id):
     body = request.json
 
     try:
-        db["users"].update_one({
+        db["patients"].update_one({
             '_id': ObjectId(id)},
             {
                 "$set": {
-                    "name": body["name"],
-                    "age": body["age"]
+                    "height": body["height"],
+                    "weight": body["weight"],
+                    "cholestrol": body["cholestrol"],
+                    "sugar_level": body["sugar_level"],
+                    "blood_pressure": body["blood_pressure"],
+                    "blood_group": body["blood_group"]  
                 }
         })
     except KeyError:
@@ -130,12 +134,14 @@ def update_user(id):
                     mimetype='application/json')
 
 
-@user_blueprint.route("/users/<string:id>", methods=["DELETE"])
+@patient_blueprint.route("/patients/<string:id>", methods=["DELETE"])
 def del_user(id):
-    data = db["users"].find_one({"_id": ObjectId(id)})
+    data = db["patients"].find_one({"_id": ObjectId(id)})
 
     if bool(data):
-        db['users'].delete_many({'_id': ObjectId(id)})
+        db['patients'].delete_many({'_id': ObjectId(id)})
+
+        db['user'].delete_many({'_id': ObjectId(id)})
 
         return Response(response=json.dumps({"Status": "Record has been deleted"}),
                         status=200,

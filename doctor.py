@@ -16,7 +16,7 @@ db = client["baymax"]
 '''
 @doctor_blueprint.route("/doctor", methods=["GET"])
 def get_all_doctors():    
-    col = db["doctor"].find()
+    col = db["doctors"].find()
     res = []
 
     for data in col:
@@ -37,7 +37,7 @@ def get_all_doctors():
 '''
 @doctor_blueprint.route("/doctor/<string:id>", methods=["GET"])
 def get_doctor(id):
-    data = db["doctor"].find_one({"_id": ObjectId(id)})
+    data = db["doctors"].find_one({"_id": ObjectId(id)})
 
     if not bool(data):
         return Response(
@@ -78,7 +78,7 @@ def add_doctor():
             "address": body["address"]
         })
 
-        db["doctor"].insert_one({
+        db["doctors"].insert_one({
             "doctor_id": _doc.inserted_id,
             "base_fee": body['base_fee'],
             "specialization": body['specialization']     
@@ -116,7 +116,7 @@ def update_doctor(id):
     body = request.json
 
     try:
-        db["doctor"].update_one({
+        db["doctors"].update_one({
             "_id": ObjectId(id) },
             {
                 "$set": {
@@ -139,12 +139,14 @@ def update_doctor(id):
 '''
 @doctor_blueprint.route("/doctor/<string:id>", methods=["DELETE"])
 def delete_doctor(id):
-    data = db["doctor"].find_one({"_id": ObjectId(id)})
+    data = db["doctors"].find_one({"_id": ObjectId(id)})
 
     if bool(data):
-        db['doctor'].delete_many({'_id': ObjectId(id)})
+        db['doctors'].delete_many({'_id': ObjectId(id)})
 
         db['schedule'].find_one_and_delete({'doctor_id': ObjectId(id) })
+
+        db['users'].find_one_and_delete({'_id': ObjectId(id) })
 
         return Response(response=json.dumps({"Status": "Record has been deleted"}),
                     status=200,
