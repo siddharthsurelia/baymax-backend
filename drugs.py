@@ -20,7 +20,7 @@ def search_drugs(med_name):
         response = json.dumps(data)
         status = 200
 
-        db["drugs"].insert_one(data)
+        db["medicine"].insert_one(data)
     else:
         response = json.dumps({"Status": "No such drug found"})
         status = 204

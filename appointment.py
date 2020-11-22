@@ -19,10 +19,10 @@ db = client["baymax"]
 '''
 @appointment_blueprint.route('/prescription', methods=["GET"])
 def get_all_appointments():
-    col = db['prescription'].aggregate([
+    col = db['prescriptions'].aggregate([
         {
             '$lookup': {
-                'from': 'doctor',
+                'from': 'users',
                 'localField': 'doctor_id',
                 'foreignField': '_id',
                 'as': 'doctor'
@@ -30,7 +30,7 @@ def get_all_appointments():
         }, {
             '$lookup': {
                 'from': 'users',
-                'localField': 'user_id',
+                'localField': 'patient_id',
                 'foreignField': '_id',
                 'as': 'patient'
             }
@@ -53,7 +53,7 @@ def add_prescription():
 
     dataDict = {
         "doctor_id": ObjectId(body["doctor_id"]),
-        "user_id": ObjectId(body["user_id"]),
+        "patient_id": ObjectId(body["patient_id"]),
         "appointment_id": ObjectId(body["appointment_id"]),
         "drugs": []
     }
@@ -61,13 +61,13 @@ def add_prescription():
     for drug in body["drugs"]:
         dataDict['drugs'].append({
                 "drug_id": ObjectId(drug['drug_id']),
-                "dose": drug['dose'],
+                "dosage": drug['dosage'],
                 "units": drug['units']
         })
 
 
     try:
-        db["prescription"].insert_one(dataDict)
+        db["prescriptions"].insert_one(dataDict)
     except KeyError:
         return Response(response=json.dumps({"Status": "Insufficient data"}),
                 status=500,
@@ -88,7 +88,9 @@ def get_appointment_list():
 
     filter = { fil: ObjectId(body[fil]) for fil in body.keys() }
 
-    entries = db["appointment"].find(filter)
+    print(filter)
+
+    entries = db["appointments"].find(filter)
 
     return Response(response=dumps(entries),
                     status=201,
@@ -103,27 +105,27 @@ def get_appointment_list():
 def add_appointment():
     body = request.json
 
-    duration = 30
+    duration = db['schedules'].find_one({"doctor_id": ObjectId(body["doctor_id"])})
 
-    if 'duration' in body.keys():
-        duration = int(body['duration'])
+    duration = int(duration['duration'])
 
     y, m, d, H, M, S, *_ = split('-|/', body['start_time'])
 
     start_time = datetime(int(y), int(m), int(d), int(H), int(M), int(S), 00)
     
-    if db['appointment'].count_documents({ "doctor_id": ObjectId(body['doctor_id']), "start_time": start_time }) > 0:
+    if db['appointments'].count_documents({ "doctor_id": ObjectId(body['doctor_id']), "start_time": start_time }) > 0:
         return Response(response=json.dumps({ "Error": f"Cannot create a appointment at {start_time}" }))
 
     dataDict = {
         "doctor_id": ObjectId(body["doctor_id"]),
-        "user_id": ObjectId(body["user_id"]),
+        "patient_id": ObjectId(body["patient_id"]),
         "start_time": start_time,
-        "end_time": start_time + timedelta(minutes = duration)
+        "end_time": start_time + timedelta(minutes = duration),
+        "status": "Available"
     }
 
     try:
-        db["appointment"].insert_one(dataDict)
+        db["appointments"].insert_one(dataDict)
     except KeyError:
         return Response(response=json.dumps({"Status": "Insufficient data"}),
                 status=500,
@@ -139,16 +141,16 @@ def add_appointment():
 '''
 @appointment_blueprint.route("/appointment/<string:id>", methods=["DELETE"])
 def delete_appointment(id):
-    data = db["appointment"].find_one({"_id": ObjectId(id)})
+    data = db["appointments"].find_one({"_id": ObjectId(id)})
 
     if bool(data):
-        db['appointment'].delete_many({'_id': ObjectId(id)})
+        db['appointments'].delete_many({'_id': ObjectId(id)})
 
         return Response(response=json.dumps({"Status": "Record has been deleted"}),
                     status=200,
                     mimetype='application/json')
     else:
-        return Response(response=json.dumps({"Status": "Record has been deleted"}),
+        return Response(response=json.dumps({"Status": "Record not found"}),
                     status=200,
                     mimetype='application/json')    
 
@@ -158,7 +160,7 @@ def delete_appointment(id):
 '''
 @appointment_blueprint.route("/appointment/<string:id>", methods=["GET"])
 def get_appointment(id):
-    data = db["appointment"].find_one({"_id": ObjectId(id)})
+    data = db["appointments"].find_one({"_id": ObjectId(id)})
 
     if bool(data):
         return Response(response=dumps(data),
@@ -173,22 +175,23 @@ def get_appointment(id):
 def update_appointment(id):
     body = request.json
 
-    duration = 30
+    # duration = 30
 
-    if 'duration' in body.keys():
-        duration = int(body['duration'])
+    # if 'duration' in body.keys():
+    #     duration = int(body['duration'])
 
-    y, m, d, H, M, S, *_ = split('-|/', body['start_time'])
+    # y, m, d, H, M, S, *_ = split('-|/', body['start_time'])
 
-    start_time = datetime(int(y), int(m), int(d), int(H), int(M), int(S), 00)
+    # start_time = datetime(int(y), int(m), int(d), int(H), int(M), int(S), 00)
 
     try:
-        db["appointment"].update_one({
+        db["appointments"].update_one({
             '_id': ObjectId(id)},
             {
                 "$set": {
-                    "start_time": start_time,
-                    "end_time": start_time + timedelta(minutes=duration)
+                    # "start_time": start_time,
+                    # "end_time": start_time + timedelta(minutes=duration),
+                    "status": body['status']
                 }
             }
         )

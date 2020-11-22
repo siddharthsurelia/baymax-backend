@@ -25,7 +25,7 @@ def add_schedule():
         "duration": body['duration']
     }
     try:
-        db['schedule'].insert_one(dataDict)
+        db['schedules'].insert_one(dataDict)
     except KeyError:
         return Response(response=json.dumps({"Status": "Insufficient Data"}), status=200, mimetype='application/json')    
 
@@ -35,14 +35,22 @@ def add_schedule():
 
 @schedule_blueprint.route('/schedule/<string:id>', methods=['GET'])
 def get_schedule(id):
-    res = db['schedule'].aggregate(        
+    res = db['schedules'].aggregate(        
         [
             {
                 "$match": { "doctor_id": ObjectId(id)}
             },
             {
                 '$lookup': {
-                    'from': 'doctor', 
+                    'from': 'users', 
+                    'localField': 'doctor_id', 
+                    'foreignField': '_id', 
+                    'as': 'user'
+                }
+            },
+            {
+                '$lookup': {
+                    'from': 'doctors', 
                     'localField': 'doctor_id', 
                     'foreignField': '_id', 
                     'as': 'doctor'
@@ -68,7 +76,7 @@ def update_schedule(id):
         "duration": body['duration']
     }
     try:
-        db['schedule'].update_one({"doctor_id": ObjectId(id) },{
+        db['schedules'].update_one({"doctor_id": ObjectId(id) },{
             "$set": { dataDict }
         })
     except KeyError:
@@ -80,7 +88,7 @@ def update_schedule(id):
 @schedule_blueprint.route('/schedule/<string:id>', methods=['DELETE'])
 def delete_schedule(id):
 
-    data = db["schedule"].find_one_and_delete({"doctor_id": ObjectId(id)})
+    data = db["schedules"].find_one_and_delete({"doctor_id": ObjectId(id)})
 
     if bool(data):        
         return Response(response=json.dumps({"Status": "Record has been deleted"}),
