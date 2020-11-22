@@ -45,40 +45,6 @@ def get_all_appointments():
 
 
 '''
-    Add a prescription
-'''
-@appointment_blueprint.route('/prescription', methods=["POST"])
-def add_prescription():
-    body = request.json
-
-    dataDict = {
-        "doctor_id": ObjectId(body["doctor_id"]),
-        "patient_id": ObjectId(body["patient_id"]),
-        "appointment_id": ObjectId(body["appointment_id"]),
-        "drugs": []
-    }
-
-    for drug in body["drugs"]:
-        dataDict['drugs'].append({
-                "drug_id": ObjectId(drug['drug_id']),
-                "dosage": drug['dosage'],
-                "units": drug['units']
-        })
-
-
-    try:
-        db["prescriptions"].insert_one(dataDict)
-    except KeyError:
-        return Response(response=json.dumps({"Status": "Insufficient data"}),
-                status=500,
-                mimetype='application/json')
-    
-    return Response(response=json.dumps({"Status": "Record has been added"}),
-                    status=201,
-                    mimetype='application/json')
-
-
-'''
     Get appointments list based on specific fields
 '''
 @appointment_blueprint.route('/appointment', methods=["GET"])                    
@@ -207,3 +173,71 @@ def update_appointment(id):
     return Response(response=json.dumps({"status": "Updated"}),
                 status=500,
                 mimetype='application/json')                
+
+
+'''
+    Add a prescription
+'''
+@appointment_blueprint.route('/prescription', methods=["POST"])
+def add_prescription():
+    body = request.json
+
+    dataDict = {
+        "doctor_id": ObjectId(body["doctor_id"]),
+        "patient_id": ObjectId(body["patient_id"]),
+        "appointment_id": ObjectId(body["appointment_id"]),
+        "drugs": []
+    }
+
+    for drug in body["drugs"]:
+        dataDict['drugs'].append({
+                "drug_id": ObjectId(drug['drug_id']),
+                "dosage": drug['dosage'],
+                "units": drug['units']
+        })
+
+
+    try:
+        db["prescriptions"].insert_one(dataDict)
+    except KeyError:
+        return Response(response=json.dumps({"Status": "Insufficient data"}),
+                status=500,
+                mimetype='application/json')
+    
+    return Response(response=json.dumps({"Status": "Record has been added"}),
+                    status=201,
+                    mimetype='application/json')
+
+
+@appointment_blueprint.route("/prescription/<string:id>", methods=["GET"])
+def get_prescription(id):
+    data = db["prescriptions"].find_one({"_id": ObjectId(id)})
+
+    if bool(data):
+        return Response(response=dumps(data),
+                    status=200,
+                    mimetype="application/json")
+
+
+@appointment_blueprint.route('/prescription', methods=["GET"])                    
+def get_all_prescriptions():
+    col = db["prescriptions"].find()
+
+    return Response(response=dumps(col),
+                    status=201,
+                    mimetype='application/json')
+
+
+@appointment_blueprint.route("/prescription/<string:id>", methods=["DELETE"])
+def delete_prescription(id):
+    data = db["prescriptions"].find_one_and_delete({'_id': ObjectId(id)})
+    
+    if data is None:
+        return Response(response=dumps({"Status": "Record not found"}),
+                    status=204,
+                    mimetype='application/json')
+    else:
+        return Response(response=dumps({"Status": "Record deleted"}),
+                    status=200,
+                    mimetype='application/json')
+    

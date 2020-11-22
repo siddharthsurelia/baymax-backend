@@ -83,99 +83,16 @@ def get_user(id):
                     mimetype='application/json')
 
 
-@user_blueprint.route("/users/biometrics/<string:id>", methods=["GET"])
-def get_user_biometrics(id):
-    data = db["biometrics"].find_one({"_id": ObjectId(id)})
-
-    if not bool(data):
-        return Response(response=json.dumps({"Error": "No such record found"}),
-                        status=204,
-                        mimetype='application/json')
-
-    dataDict = {
-        "height": data["height"],
-        "weight": data["weight"],
-        "bmi": data["bmi"],
-        "cholesterol": data["cholesterol"],
-        "diabetic": data["diabetic"],
-        "blood_pressure": data["blood_pressure"],
-        "blood_group": data["blood_group"]
-    }
-
-    return Response(response=json.dumps(dataDict),
-                    status=200,
-                    mimetype='application/json')
-
-
-@user_blueprint.route("/users", methods=["POST"])
-def add_user():
-    body = request.json
-    password = body["password"]
-    result = hashlib.sha512(password.encode())
-    height = body["height"]
-    weight = body["weight"]
-    bmi = weight/height**2
-    dob = datetime.datetime.strptime(body["dob"], "%Y-%m-%d").date()
-    today = datetime.date.today()
-    age = today.year - dob.year - \
-        ((today.month, today.day) < (dob.month, dob.day))
-
-    biometrics = db["biometrics"].insert_one({
-        "height": height,
-        "weight": weight,
-        "bmi": bmi,
-        "cholesterol": body["cholesterol"],
-        "diabetic": body["diabetic"],
-        "blood_pressure": body["blood_pressure"],
-        "blood_group": body["blood_group"]
-    })
-
-    try:
-
-        db["users"].insert_one({
-            "name": body["name"],
-            "username": body["username"],
-            "password": result.hexdigest(),
-            "dob": str(dob),
-            "age": age,
-            "mobile": body["mobile"],
-            "address": body["address"],
-            "biometrics_id": biometrics._InsertOneResult__inserted_id
-        })
-    except KeyError:
-        return Response(response=json.dumps({"Status": "Insufficient data"}),
-                        status=500,
-                        mimetype='application/json')
-    except Exception as e:
-        return Response(response=json.dumps({"Status": "Internal server error - "+str(e.__class__)}),
-                        status=500,
-                        mimetype='application/json')
-
-    return Response(response=json.dumps({"Status": "Record has been added"}),
-                    status=201,
-                    mimetype='application/json')
-
-
 @user_blueprint.route("/users/<string:id>", methods=["PUT"])
 def update_user(id):
     body = request.json
 
-    dataDict = {            
-        "firstname": body["firstname"],
-        "lastname": body["lastname"],
-        "email": body["email"],
-        "dob": body["dob"],
-        "mobile": body["mobile"],
-        "address": body["address"]
-    }
+    filter = {fil: body[fil] for fil in body.keys()}
 
     try:
-        db["users"].update_one({
-            '_id': ObjectId(id)},
-            {
-                "$set": {
-                    dataDict
-                }
+        db["users"].update_one({'_id': ObjectId(id)},
+                               {
+            "$set": filter
         })
     except KeyError:
         return Response(response=json.dumps({"Status": "Insufficient data"}),
