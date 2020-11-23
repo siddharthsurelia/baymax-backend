@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request, Response, json
 from bson.objectid import ObjectId
+from bson.json_util import dumps
 from pymongo import MongoClient
 import logging as log
 import sys
@@ -32,7 +33,15 @@ def search_drugs(med_name):
 
 @drugs_blueprint.route("/drugs/all", methods=["GET"])
 def get_all_drugs():
-    col = db["drugs"].find()
+    col = db["drugs"].aggregate([
+        {
+        '$lookup': {
+            'from': 'drugs', 
+            'localField': 'substitutes', 
+            'foreignField': '_id', 
+            'as': 'substitutes'
+        }
+    }])
     res = []
 
     for data in col:
@@ -47,19 +56,33 @@ def get_all_drugs():
         }
         res.append(dataDict)
 
-    return Response(response=json.dumps(res),
+    return Response(response=dumps(res),
                     status=200,
                     mimetype='application/json')
 
 
 @drugs_blueprint.route("/drugs/<string:id>", methods=["GET"])
 def get_drug(id):
-    data = db["drugs"].find_one({"_id": ObjectId(id)})
-    
+    data = db["drugs"].aggregate([
+    {
+        '$match': {
+            '_id': ObjectId(id)
+        }
+    }, {
+        '$lookup': {
+            'from': 'drugs', 
+            'localField': 'substitutes', 
+            'foreignField': '_id', 
+            'as': 'substitutes'
+        }
+    }])
+
     if not bool(data):
         return Response(response=json.dumps({"Error": "No such record found"}),
                     status=204,
                     mimetype='application/json')
+
+    data = [d for d in data][0]
 
     dataDict = {
         "id": str(data["_id"]),            
@@ -71,6 +94,6 @@ def get_drug(id):
         "illness_id": str(data["illness_id"])
     }
 
-    return Response(response=json.dumps(dataDict),
+    return Response(response=dumps(dataDict),
                     status=200,
                     mimetype='application/json')
