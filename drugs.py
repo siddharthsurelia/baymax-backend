@@ -42,8 +42,8 @@ def get_all_drugs():
             "manufacturer": data["manufacturer"],
             "composition": data["composition"],
             "side_effects": data["side_effects"],
-            "substitutes": data["substitutes"],
-            "illness_id": data["illness_id"]
+            "substitutes": [str(s) for s in data["substitutes"]],
+            "illness_id": str(data["illness_id"])
         }
         res.append(dataDict)
 
@@ -67,8 +67,8 @@ def get_drug(id):
         "manufacturer": data["manufacturer"],
         "composition": data["composition"],
         "side_effects": data["side_effects"],
-        "substitutes": data["substitutes"],
-        "illness_id": data["illness_id"]
+        "substitutes": [str(s) for s in data["substitutes"]],
+        "illness_id": str(data["illness_id"])
     }
 
     return Response(response=json.dumps(dataDict),

@@ -26,10 +26,10 @@ def login():
     data = db["users"].find_one({"email": email})
 
     if data is not None and hashlib.sha512(password.encode()).hexdigest() == data["password"]:
-        res = "Login Successful"
+        res = {"Status": "Login Successful"}
         status = 200
     else:
-        res = "Email or Password incorrect"
+        res = {"Status": "Email or Password incorrect"}
         status = 401
 
     return Response(response=json.dumps(res),
