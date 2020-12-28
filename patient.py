@@ -22,7 +22,7 @@ def get_all_patients():
             "id": str(data["_id"]),
             "height": data["height"],
             "weight": data["weight"],
-            "cholestrol": data["cholestrol"],
+            "cholesterol": data["cholesterol"],
             "sugar_level": data["sugar_level"],
             "blood_pressure": data["blood_pressure"],
             "blood_group": data["blood_group"]
@@ -47,7 +47,7 @@ def get_patient(id):
         "id": str(data["_id"]),
         "height": data["height"],
         "weight": data["weight"],
-        "cholestrol": data["cholestrol"],
+        "cholesterol": data["cholesterol"],
         "sugar_level": data["sugar_level"],
         "blood_pressure": data["blood_pressure"],
         "blood_group": data["blood_group"]
@@ -59,7 +59,7 @@ def get_patient(id):
 
 
 @patient_blueprint.route("/patients", methods=["POST"])
-def add_user():
+def add_patient():
     body = request.json
     password = body["password"]
     result = hashlib.sha512(password.encode())
@@ -85,10 +85,10 @@ def add_user():
         })
 
         db["patients"].insert_one({
-            "patient_id": _patient.inserted_id,
+            "_id": _patient.inserted_id,
             "height": body["height"],
             "weight": body["weight"],
-            "cholestrol": body["cholestrol"],
+            "cholesterol": body["cholesterol"],
             "sugar_level": body["sugar_level"],
             "blood_pressure": body["blood_pressure"],
             "blood_group": body["blood_group"]    
@@ -111,18 +111,14 @@ def add_user():
 def update_patient(id):
     body = request.json
 
+    filter = { fil: body[fil] for fil in body.keys() }
+
     try:
         db["patients"].update_one({
-            '_id': ObjectId(id)},
+            "_id": ObjectId(id) },
             {
-                "$set": {
-                    "height": body["height"],
-                    "weight": body["weight"],
-                    "cholestrol": body["cholestrol"],
-                    "sugar_level": body["sugar_level"],
-                    "blood_pressure": body["blood_pressure"],
-                    "blood_group": body["blood_group"]  
-                }
+                "$set": filter
+                           
         })
     except KeyError:
         return Response(response=json.dumps({"Status": "Insufficient data"}),
@@ -135,7 +131,7 @@ def update_patient(id):
 
 
 @patient_blueprint.route("/patients/<string:id>", methods=["DELETE"])
-def del_user(id):
+def del_patient(id):
     data = db["patients"].find_one({"_id": ObjectId(id)})
 
     if bool(data):

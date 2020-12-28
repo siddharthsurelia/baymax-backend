@@ -1,12 +1,12 @@
 version: '3.7'
 
 services:
-    # baymax:
-    #     build: .
-    #     container_name: baymax
-    #     restart: always
-    #     ports:
-    #         - 5000:5000
+    baymax:
+        build: .
+        container_name: baymax
+        restart: always
+        ports:
+            - 5000:5000
     mongodb:
         image: mongo:latest
         container_name: mongodb
